@@ -1,0 +1,25 @@
+{
+  "name": "taskmanager-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "",
+    "dev": "nodemon  src/app.js -js,hbs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "datatables": "^1.10.18",
+    "express": "^4.17.3",
+    "hbs": "^4.2.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.2.2",
+    "path": "^0.12.7",
+    "sweetalert": "^2.1.2",
+    "sweetalert2": "^11.4.4",
+    "validator": "^13.7.0"
+  }
+}
