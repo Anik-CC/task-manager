@@ -42,6 +42,19 @@ app.listen(3000,()=>{
     console.log("port is running on 3000")
 })
 
+const Task = require("./database/task")
+const User = require("./database/person")
+
+
+const main = async()=>{
+/* const task = await Task.findById('626057c0b7a177df425f8278')
+await task.populate(['owner']) */
+
+const user = await User.findById('622f8c7d3a84b85e34e6876f')
+await user.populate('tasks')
+console.log(user.toObject({ virtuals: true }))//this is used to show the virtuals
+}
+//main()
 
 
 const myFunction =  async()=>{
@@ -61,6 +74,17 @@ const logintest = async()=>{
     const data = jwt.verify(token,'thisIsNew')
    //console.log(data)
 }
+
+const pet = {
+    name:"mei"
+}
+
+pet.toJSON = function(){
+    
+    return this
+}
+
+//console.log(JSON.stringify(pet))
 
 //ogintest()
 //myFunction()

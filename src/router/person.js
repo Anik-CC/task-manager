@@ -59,6 +59,19 @@ router.post('/person/logout',auth,async(req,res)=>{
     
 })
 
+router.post('/person/logoutAll',auth,async(req,res)=>{
+    
+    try {
+        req.user.tokens = [];
+        console.log(req.user)
+        await req.user.save()
+        res.status(200).send({msg:"You are Flushed Out all Tokens"})
+     } catch (error) {
+         res.send(400).send(error)
+     }
+    
+})
+
 router.get('/person/me',auth,async(req,res)=>{
     res.status(200).send(req.user)
     
@@ -81,8 +94,8 @@ router.get('/person/:id',async(req,res)=>{
 })
 
 
-router.patch('/person/:id',async(req,res)=>{
-    const personID = req.params.id;
+router.patch('/person/',auth,async(req,res)=>{
+   
     const updates = Object.keys(req.body);
     const allowUpdate = ['name','email','age','password'];
     const isValidOperation = updates.every((update)=>allowUpdate.includes(update))
@@ -92,29 +105,26 @@ router.patch('/person/:id',async(req,res)=>{
         return res.status(400).send({error:"Invalid Operations"})
     }
     try {
-        const person = await Person.findById(personID)
-        updates.forEach((update)=>   person[update] = req.body[update])
+       
+        updates.forEach((update)=>   req.user[update] = req.body[update])
 
-        await person.save()
-        //const person = await person.findByIdAndUpdate(personID,req.body,{new:true, runValidators:true})
-        // if(!person){
-        //     return res.status(404)
-        // }
-
-        res.send(person)
+        await req.user.save()
+        res.send(req.user)
     } catch (error) {
         res.status(403).send(error)
     }
 })
 
-router.delete("/person/:id",async(req,res)=>{
-    const taskID = req.params.id;
+router.delete("/person/me",auth,async(req,res)=>{
+    
+    
     try {
-        const task = await Task.findByIdAndDelete(taskID)
-        if(!task){
-            return res.sendStatus(404).send({"error":"Not found the task regarding ID "+taskID})
-        }
-        res.send(task)
+       /*  const person = await Person.findByIdAndDelete(req.user.id)
+        if(!person){
+            return res.sendStatus(404).send({"error":"Not found the Person regarding ID "+req.user.id})
+        } */
+        await req.user.remove()
+        res.send({'msg':"Success the person is deleted"});
     } catch (error) {
         res.sendStatus(404).send(error)
     }
@@ -125,11 +135,11 @@ router.post("/person/login",async(req,res)=>{
         const user = await Person.findByCredentials( req.body.email, req.body.password)
         const token = await user.generateAuthToken()
         
-       
+        // res.send({user:user.getPublicProfile(), token})
         res.send({user, token})
     } catch (error) {
         console.log(error)
-       res.sendStatus(400)
+       res.send({error:"No user found please check the response"})
         
     }
 })

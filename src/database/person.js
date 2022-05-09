@@ -2,6 +2,7 @@ const mongoose = require("./mongoose")
 const validator = require('validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const Task = require('./task')
 
 const userSchema = new mongoose.Schema({
     name:{
@@ -40,6 +41,25 @@ const userSchema = new mongoose.Schema({
         }
     }]
 })
+/* Here we are setting the local and foreign keys as localfield is the id of the user and foreign field is the owner field of the task schema */
+userSchema.virtual('tasks',{
+    ref: 'Task',
+    localField: '_id',
+    foreignField: 'owner'
+})
+/*************************** Ends here storing of the virtual reference ********************************/
+
+// Creating a user profile after successfull login
+
+userSchema.methods.toJSON = function(){
+    const user = this
+    const userObject = user.toObject()
+
+    delete userObject.password
+    delete userObject.tokens
+
+    return userObject
+}
 
 // Generating Token
 
@@ -80,6 +100,15 @@ userSchema.pre('save',async function(next){
     if(user.isModified('password')){
         user.password = await bcrypt.hash(user.password, 8)
     }
+    next()
+})
+
+
+// Delete the user tasks when user is deleted
+userSchema.pre('remove',async function(next){
+    const user = this
+    await Task.deleteMany({owner: user._id})
+
     next()
 })
 

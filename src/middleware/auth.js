@@ -7,7 +7,7 @@ const auth = async(req, res, next)=>{
         const decoded = jwt.verify(token ,'signIn')
         const person = await Person.findOne({_id: decoded._id, 'tokens.token':token})
         if(!person){
-         return  res.status(404).send({error:"Sorry No user Found"})
+         return  res.status(404).send({error:"Please Login First and then Try"})
         }
         req.token = token
         req.user = person

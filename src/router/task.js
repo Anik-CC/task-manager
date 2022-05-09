@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const Task = require('../database/task')
+const auth = require('../middleware/auth')
 const path = require('path')
 var hbs = require('hbs');
 
@@ -9,8 +10,14 @@ router.get('/',(req,res)=>{
     
 })
 
-router.post('/task',async(req,res)=>{
-    const task = await new Task(req.body)
+router.post('/task',auth,async(req,res)=>{
+    const ID = req.user._id.toString()
+    
+    const task = await new Task({
+        ...req.body,
+        owner: req.user._id
+    })
+   
     try {
         await task.save()
         res.status(200).send(task)
@@ -28,9 +35,19 @@ router.post('/task',async(req,res)=>{
       })
 })
 
-router.get('/task',async(req,res)=>{
+router.get('/task',auth,async(req,res)=>{
+    
     try {
-        const tasks = await Task.find({})
+        
+        // const tasks = await Task.find({owner:req.user._id})
+        await req.user.populate('tasks')
+        const tasks = req.user.tasks
+        //console.log(tasks.toObject({ virtuals: true }))
+        
+        
+        if(!tasks){
+            return res.status(404).send({error:"No task found by your ID "+req.user._id})
+        }
        
         res.status(200).send(tasks)
     
@@ -40,24 +57,29 @@ router.get('/task',async(req,res)=>{
     
 })
 
-router.get('/task/:id',async(req,res)=>{
-    const taskID = req.params.id;
+router.get('/task/:id',auth ,async(req,res)=>{
+    const _id = req.params.id;
+   // console.log({ _id, owner: req.user._id })
     try {
-        const task = await Task.findById(taskID)
+        // const task = await Task.findById(taskID)
+        const task = await Task.findOne({ _id, owner: req.user._id })
+        if(!task){
+            return res.status(404).send({error:"You have not created any task or wrong task ID"})
+        }
         res.status(200).send(task)
         
     } catch (error) {
         const err = {
             description:"404 not found",
             reason: "The ID searched was not found in Database",
-            searchedID: taskID
+            searchedID: _id
         }
         res.status(400).send(err)
     }
 })
 
 
-router.patch('/task/:id',async(req,res)=>{
+router.patch('/task/:id',auth,async(req,res)=>{
     const taskID = req.params.id;
     const updates = Object.keys(req.body);
     const allowUpdate = ['description','completed'];
@@ -67,35 +89,42 @@ router.patch('/task/:id',async(req,res)=>{
     if(!isValidOperation){
         return res.status(400).send({error:"Invalid Operations"})
     }
+
     try {
-        const task = await Task.findById(taskID)
-        res.send(task)
+        
+        const task = await Task.findOne({_id: taskID, owner: req.user._id })
+        // const task = await Task.findById(taskID)
+        console.log(task)
+       
+        //const task = await Task.findByIdAndUpdate(taskID,req.body,{new:true, runValidators:true})
+        
+        if(!task){
+            return res.status(404).send({error:"Cannot update this task"})
+        }
+        
         updates.forEach(update => {
            task[update] =  req.body[update]
         });
-       
-        //const task = await Task.findByIdAndUpdate(taskID,req.body,{new:true, runValidators:true})
         await task.save()
-        if(!task){
-            return res.status(404)
-        }
-
+        res.send(task)
         
     } catch (error) {
+        console.log(error)
         res.status(403).send(error)
     }
 })
 
-router.delete("/task/:id",async(req,res)=>{
+router.delete("/task/:id",auth,async(req,res)=>{
     const taskID = req.params.id;
+
     try {
-        const task = await Task.findByIdAndDelete(taskID)
+        const task = await Task.findOneAndDelete({_id:taskID, owner:req.user._id})
         if(!task){
-            return res.sendStatus(404).send({"error":"Not found the task regarding ID "+taskID})
+            return res.status(404).send({error:"Not found the task regarding ID "})
         }
         res.send(task)
     } catch (error) {
-        res.sendStatus(404).send(error)
+        res.status(500).send(error)
     }
 })
 
