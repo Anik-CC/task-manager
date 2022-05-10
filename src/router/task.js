@@ -35,12 +35,36 @@ router.post('/task',auth,async(req,res)=>{
       })
 })
 
+// GET /task?completed=false
+// Pagination GET/task?limit=10&skip=20
+//Sorting -1 is for descending and 1 for ascending for any field createdAt:desc
 router.get('/task',auth,async(req,res)=>{
+    const  match = {}
+    const sort = {}
+        if(req.query.completed){
+            
+            match.completed = req.query.completed === 'true'
+        }
+        if(req.query.sortBy){
+            const parts = req.query.sortBy.split(":")
+            console.log(parts)
+            sort[parts[0]] = (parts[1] === 'desc' ? -1 : 1) 
+        }
+        console.log(match)
     
     try {
-        
-        // const tasks = await Task.find({owner:req.user._id})
-        await req.user.populate('tasks')
+
+        await req.user.populate({
+            path: 'tasks',
+            match,
+            options: {
+                limit: parseInt(req.query.limit),
+                skip: parseInt(req.query.skip),
+                sort: {
+                    completed:-1
+                }
+            }
+        })
         const tasks = req.user.tasks
         //console.log(tasks.toObject({ virtuals: true }))
         

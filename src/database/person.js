@@ -40,6 +40,8 @@ const userSchema = new mongoose.Schema({
             required: true
         }
     }]
+},{
+    timestamps:true
 })
 /* Here we are setting the local and foreign keys as localfield is the id of the user and foreign field is the owner field of the task schema */
 userSchema.virtual('tasks',{
