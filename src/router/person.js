@@ -3,6 +3,11 @@ const router = express.Router()
 const Person = require('../database/person')
 const bcrypt = require("bcryptjs")
 const auth = require('../middleware/auth')
+const multer = require('multer')
+
+const upload = multer({
+    dest: "images"
+})
 
 
 
@@ -142,6 +147,11 @@ router.post("/person/login",async(req,res)=>{
        res.send({error:"No user found please check the response"})
         
     }
+})
+
+
+router.post("/person/me/avatar", upload.single('avatar'), (req,res)=>{
+    res.send("file uploaded")
 })
 
 
