@@ -4,7 +4,11 @@ const Person = require('../database/person')
 const bcrypt = require("bcryptjs")
 const auth = require('../middleware/auth')
 const multer = require('multer')
+const sharp = require('sharp')
 const { route } = require('express/lib/application')
+const { sendWelcomeEmail,sendCancelEmail } = require('../email/account')
+
+
 
 
 
@@ -20,15 +24,16 @@ router.post('/person', async (req, res) => {
     const person = await new Person(req.body)
     try {
         await person.save()
+        sendWelcomeEmail(person.email,person.name)
         const token = await person.generateAuthToken()
         res.status(200).send({ person, token })
 
     } catch (error) {
-        res.status(400).send(error)
+        res.status(400).send({error:error.message})
     }
 
     person.save().then((result) => {
-        console.log(result)
+        
         res.status(200).send()
         res.send({ result })
     }).catch(() => {
@@ -127,7 +132,9 @@ router.delete("/person/me", auth, async (req, res) => {
          if(!person){
              return res.sendStatus(404).send({"error":"Not found the Person regarding ID "+req.user.id})
          } */
+         sendCancelEmail(req.user.email,req.user.name)
         await req.user.remove()
+        
         res.send({ 'msg': "Success the person is deleted" });
     } catch (error) {
         res.sendStatus(404).send(error)
@@ -160,9 +167,9 @@ const upload = multer({
         fileSize: 100000000
     },
     fileFilter(req, file, cb) {
-        if (!file.originalname.match(/\.(png|jpeg|jpg)$/)) {
+        if (!file.originalname.match(/\.(png|jpeg|jpg|gif)$/)) {
 
-            return cb(new Error("File should be WORD document"))
+            return cb(new Error("File should be png|jpeg|jpg|gif"))
         }
         cb(undefined, true)
 
@@ -170,10 +177,12 @@ const upload = multer({
 })
 
 router.post("/person/me/avatar", auth, upload.single('avatar'), async (req, res) => {
-    req.user.avatar = req.file.buffer
+
+    const buffer = await sharp(req.file.buffer).resize({ width: 250,height:250 }).png().toBuffer()
+    req.user.avatar = buffer
     await req.user.save()
     res.status(200).send("Uploaded Successful")
-    res.send("file uploaded")
+
 }, (error, req, res, next) => {
     res.status(400).send({ error: error.message })
 })
@@ -190,7 +199,7 @@ router.get("/person/:id/avatar", async (req, res) => {
         if (!person || !person.avatar) {
             throw new Error("No user with image/data found")
         }
-        res.set("Content-Type", "image/jpg")
+        res.set("Content-Type", "image/png")
         res.send(person.avatar)
     } catch (error) {
         res.status(404).send({ error: error.message })
