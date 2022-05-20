@@ -3,6 +3,9 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const app = express();
 
+const port = process.env.PORT
+
+
 const router = require('../src/router/task')
 const person = require('../src/router/person')
 
@@ -38,8 +41,8 @@ app.use(person)//using the person-API
 
 
 
-app.listen(3000,()=>{
-    console.log("port is running on 3000")
+app.listen(port,()=>{
+    console.log("port is running on "+port)
 })
 
 const Task = require("./database/task")

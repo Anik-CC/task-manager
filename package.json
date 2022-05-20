@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "",
-    "dev": "nodemon  src/app.js -js,hbs"
+    "start": "node src/app.js",
+    "dev": "env-cmd -f ./config/dev.env nodemon  src/app.js -js,hbs"
   },
   "keywords": [],
   "author": "",
@@ -24,5 +24,8 @@
     "sweetalert": "^2.1.2",
     "sweetalert2": "^11.4.4",
     "validator": "^13.7.0"
+  },
+  "devDependencies": {
+    "env-cmd": "^10.1.0"
   }
 }

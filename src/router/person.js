@@ -14,7 +14,6 @@ const { sendWelcomeEmail,sendCancelEmail } = require('../email/account')
 
 
 
-
 router.get('/', (req, res) => {
     res.send('Hi this is node js')
 
